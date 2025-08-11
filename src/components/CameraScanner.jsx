@@ -6,7 +6,10 @@ const CameraScanner = ({ onImageCaptured }) => {
   const [isStreaming, setIsStreaming] = useState(false);
 
   const startCamera = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" } }
+    });
+
     videoRef.current.srcObject = stream;
     setIsStreaming(true);
   };
