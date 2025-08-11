@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import CameraScanner from './components/CameraScanner';
 import CollectionList from './components/CollectionList';
-import { recognizeCardName } from './utils/ocr';
-import { fetchCardByName } from './utils/scryfallAPI';
+
 
 const App = () => {
   const [collection, setCollection] = useState([]);
@@ -10,17 +9,37 @@ const App = () => {
   const [error, setError] = useState('');
 
   const handleImageCaptured = async (imageDataUrl) => {
-    setLoading(true);
-    setError('');
-    try {
-      const name = await recognizeCardName(imageDataUrl);
-      const card = await fetchCardByName(name);
-      setCollection(prev => [...prev, card]);
-    } catch (err) {
-      setError('Kunne ikke gjenkjenne eller hente kort');
-    }
-    setLoading(false);
-  };
+  setLoading(true);
+  setError('');
+
+  try {
+    // Konverter base64-data til Blob
+    const blob = await (await fetch(imageDataUrl)).blob();
+
+    // Lag formdata for bilde-opplasting
+    const formData = new FormData();
+    formData.append("file", blob, "card.png");
+
+    // Send til Scryfall image recognition
+    const response = await fetch("https://api.scryfall.com/cards/recognize", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error("Scryfall-bildegjenkjenning feilet");
+    const result = await response.json();
+
+    // Bruk det første kortet de foreslår
+    const card = result.data[0];
+    setCollection(prev => [...prev, card]);
+  } catch (err) {
+    console.error(err);
+    setError('Kunne ikke gjenkjenne kortet med bilde');
+  }
+
+  setLoading(false);
+};
+
 
   return (
     <div style={{ padding: 20 }}>
