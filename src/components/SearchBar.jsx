@@ -1,19 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 
 const SearchBar = ({ onCardAdded }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
 
-  const searchCards = async () => {
-    if (!query) return;
-    setLoading(true);
-    const response = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}`);
-    const data = await response.json();
-    setResults(data.data || []);
-    setLoading(false);
-  };
+  // Debounce-effekt: venter 400ms etter at bruker slutter å skrive
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [query]);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (!debouncedQuery) {
+        setResults([]);
+        return;
+      }
+      setLoading(true);
+      try {
+        const response = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(debouncedQuery)}`);
+        const data = await response.json();
+        setResults(data.data || []);
+      } catch (error) {
+        console.error('Scryfall-feil:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResults();
+  }, [debouncedQuery]);
 
   const addCardToCollection = async (card) => {
     const { error } = await supabase.from('cards').insert([{
@@ -38,26 +59,28 @@ const SearchBar = ({ onCardAdded }) => {
   };
 
   return (
-    <div>
+    <div style={{ marginBottom: '2rem' }}>
       <input
         type="text"
         placeholder="Søk etter kort..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        style={{ padding: '0.5rem', width: '300px', marginRight: '1rem' }}
       />
-      <button onClick={searchCards} disabled={loading}>
-        {loading ? 'Søker...' : 'Søk'}
-      </button>
+      {loading && <span>Søker...</span>}
 
-      <ul>
+      <div style={{ marginTop: '1rem' }}>
         {results.map((card) => (
-          <li key={card.id} style={{ margin: '1rem 0' }}>
-            <img src={card.image_uris?.small} alt={card.name} />
-            <p>{card.name} ({card.set.toUpperCase()})</p>
-            <button onClick={() => addCardToCollection(card)}>Legg til i samling</button>
-          </li>
+          <div key={card.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+            <img src={card.image_uris?.small} alt={card.name} style={{ marginRight: '1rem', borderRadius: '4px' }} />
+            <div>
+              <strong>{card.name}</strong> ({card.set.toUpperCase()})
+              <br />
+              <button onClick={() => addCardToCollection(card)}>Legg til i samling</button>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };
