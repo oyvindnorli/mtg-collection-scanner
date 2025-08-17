@@ -7,33 +7,48 @@ const SearchBar = ({ onCardAdded }) => {
   const [loading, setLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
-  // Debounce-effekt: venter 400ms etter at bruker slutter å skrive
+  // Debounce-effekt
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedQuery(query);
+      setDebouncedQuery(query.trim());
     }, 400);
     return () => clearTimeout(handler);
   }, [query]);
 
+  // Hent kort når debounce-query endres
   useEffect(() => {
-    const fetchResults = async () => {
+    const fetchCards = async () => {
       if (!debouncedQuery) {
         setResults([]);
         return;
       }
+
       setLoading(true);
       try {
-        const response = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(debouncedQuery)}`);
-        const data = await response.json();
-        setResults(data.data || []);
-      } catch (error) {
-        console.error('Scryfall-feil:', error);
+        // 1. Prøv eksakt navnesøk – gir alle varianter
+        const exactUrl = `https://api.scryfall.com/cards/search?q=!"${encodeURIComponent(debouncedQuery)}"`;
+
+        const exactRes = await fetch(exactUrl);
+        const exactData = await exactRes.json();
+
+        if (exactData.object === 'list' && exactData.data.length > 0) {
+          setResults(exactData.data);
+        } else {
+          // 2. Hvis ingen eksakt treff, bruk vanlig søk
+          const fallbackUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(debouncedQuery)}`;
+          const fallbackRes = await fetch(fallbackUrl);
+          const fallbackData = await fallbackRes.json();
+          setResults(fallbackData.data || []);
+        }
+      } catch (err) {
+        console.error('Feil ved Scryfall-søk:', err);
+        setResults([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchResults();
+    fetchCards();
   }, [debouncedQuery]);
 
   const addCardToCollection = async (card) => {
@@ -74,7 +89,7 @@ const SearchBar = ({ onCardAdded }) => {
           <div key={card.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
             <img src={card.image_uris?.small} alt={card.name} style={{ marginRight: '1rem', borderRadius: '4px' }} />
             <div>
-              <strong>{card.name}</strong> ({card.set.toUpperCase()})
+              <strong>{card.name}</strong> ({card.set.toUpperCase()} #{card.collector_number})
               <br />
               <button onClick={() => addCardToCollection(card)}>Legg til i samling</button>
             </div>
