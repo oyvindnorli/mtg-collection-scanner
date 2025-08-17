@@ -31,7 +31,7 @@ const SearchBar = ({ onCardAdded }) => {
     }]);
 
     if (!error) {
-      onCardAdded(); // For å oppdatere samlingen
+      onCardAdded();
     } else {
       alert("Feil ved lagring: " + error.message);
     }
