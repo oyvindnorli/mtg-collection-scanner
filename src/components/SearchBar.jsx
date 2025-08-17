@@ -15,7 +15,7 @@ const SearchBar = ({ onCardAdded }) => {
   }, [query]);
 
   useEffect(() => {
-    const fetchCardPrints = async () => {
+    const fetchCards = async () => {
       if (!debouncedQuery) {
         setResults([]);
         return;
@@ -23,24 +23,25 @@ const SearchBar = ({ onCardAdded }) => {
 
       setLoading(true);
       try {
-        // Først forsøk å hente én versjon med eksakt navn
-        const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(debouncedQuery)}`);
-        if (!res.ok) throw new Error("Kort ikke funnet");
-        const card = await res.json();
+        const encoded = encodeURIComponent(`!"${debouncedQuery}" include:extras`);
+        const url = `https://api.scryfall.com/cards/search?q=${encoded}`;
+        const res = await fetch(url);
+        const data = await res.json();
 
-        // Deretter hent alle versjoner fra prints_search_uri
-        const printsRes = await fetch(card.prints_search_uri);
-        const printsData = await printsRes.json();
-        setResults(printsData.data || []);
+        if (data.object === 'list') {
+          setResults(data.data || []);
+        } else {
+          setResults([]);
+        }
       } catch (err) {
-        console.error("Feil ved henting av kort:", err);
+        console.error('Feil ved henting fra Scryfall:', err);
         setResults([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCardPrints();
+    fetchCards();
   }, [debouncedQuery]);
 
   const addCardToCollection = async (card) => {
