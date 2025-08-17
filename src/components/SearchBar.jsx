@@ -24,7 +24,8 @@ const SearchBar = ({ onCardAdded }) => {
       setLoading(true);
       try {
         const encoded = encodeURIComponent(`!"${debouncedQuery}" include:extras`);
-        const url = `https://api.scryfall.com/cards/search?q=${encoded}`;
+        const url = `https://api.scryfall.com/cards/search?q=${encoded}&unique=prints`;
+
         const res = await fetch(url);
         const data = await res.json();
 
@@ -86,7 +87,7 @@ const SearchBar = ({ onCardAdded }) => {
             <img
               src={card.image_uris?.normal}
               alt={card.name}
-              className="rounded-md w-full h-auto mb-3"
+              className="rounded-md w-48 h-auto mb-3"
             />
             <h3 className="font-semibold text-sm">{card.name}</h3>
             <p className="text-xs text-gray-600 mb-2">{card.set_name} ({card.set.toUpperCase()})</p>
