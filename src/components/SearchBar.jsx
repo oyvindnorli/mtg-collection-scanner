@@ -25,7 +25,6 @@ const SearchBar = ({ onCardAdded }) => {
       try {
         const encoded = encodeURIComponent(`!"${debouncedQuery}" include:extras`);
         const url = `https://api.scryfall.com/cards/search?q=${encoded}&unique=prints`;
-
         const res = await fetch(url);
         const data = await res.json();
 
@@ -78,22 +77,22 @@ const SearchBar = ({ onCardAdded }) => {
       />
       {loading && <p className="mt-2 text-sm text-gray-500">Søker...</p>}
 
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {results.map((card) => (
           <div
             key={card.id}
-            className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-300 p-4 flex flex-col items-center text-center"
+            className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-300 p-3 flex flex-col items-center text-center max-w-xs"
           >
             <img
               src={card.image_uris?.normal}
               alt={card.name}
-              className="rounded-md w-24 h-auto mb-3"
+              className="rounded-md w-32 h-auto mb-2"
             />
-            <h3 className="font-semibold text-sm">{card.name}</h3>
+            <h3 className="font-semibold text-xs">{card.name}</h3>
             <p className="text-xs text-gray-600 mb-2">{card.set_name} ({card.set.toUpperCase()})</p>
             <button
               onClick={() => addCardToCollection(card)}
-              className="mt-auto bg-blue-600 text-white text-sm px-4 py-1 rounded hover:bg-blue-700 transition"
+              className="mt-auto bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700 transition"
             >
               Legg til i samling
             </button>
