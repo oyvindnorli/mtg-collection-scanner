@@ -67,25 +67,35 @@ const SearchBar = ({ onCardAdded }) => {
   };
 
   return (
-    <div style={{ marginBottom: '2rem' }}>
+    <div className="mb-8 px-4">
       <input
         type="text"
         placeholder="Søk etter kort..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        style={{ padding: '0.5rem', width: '300px', marginRight: '1rem' }}
+        className="border border-gray-300 rounded-md px-3 py-2 w-full max-w-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
-      {loading && <span>Søker...</span>}
+      {loading && <p className="mt-2 text-sm text-gray-500">Søker...</p>}
 
-      <div style={{ marginTop: '1rem' }}>
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {results.map((card) => (
-          <div key={card.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-            <img src={card.image_uris?.small} alt={card.name} style={{ marginRight: '1rem', borderRadius: '4px' }} />
-            <div>
-              <strong>{card.name}</strong> ({card.set.toUpperCase()} #{card.collector_number})
-              <br />
-              <button onClick={() => addCardToCollection(card)}>Legg til i samling</button>
-            </div>
+          <div
+            key={card.id}
+            className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-300 p-4 flex flex-col items-center text-center"
+          >
+            <img
+              src={card.image_uris?.normal}
+              alt={card.name}
+              className="rounded-md w-full h-auto mb-3"
+            />
+            <h3 className="font-semibold text-sm">{card.name}</h3>
+            <p className="text-xs text-gray-600 mb-2">{card.set_name} ({card.set.toUpperCase()})</p>
+            <button
+              onClick={() => addCardToCollection(card)}
+              className="mt-auto bg-blue-600 text-white text-sm px-4 py-1 rounded hover:bg-blue-700 transition"
+            >
+              Legg til i samling
+            </button>
           </div>
         ))}
       </div>
