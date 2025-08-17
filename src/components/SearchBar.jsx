@@ -7,7 +7,6 @@ const SearchBar = ({ onCardAdded }) => {
   const [loading, setLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
-  // Debounce-effekt
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(query.trim());
@@ -15,9 +14,8 @@ const SearchBar = ({ onCardAdded }) => {
     return () => clearTimeout(handler);
   }, [query]);
 
-  // Hent kort når debounce-query endres
   useEffect(() => {
-    const fetchCards = async () => {
+    const fetchCardPrints = async () => {
       if (!debouncedQuery) {
         setResults([]);
         return;
@@ -25,30 +23,24 @@ const SearchBar = ({ onCardAdded }) => {
 
       setLoading(true);
       try {
-        // 1. Prøv eksakt navnesøk – gir alle varianter
-        const exactUrl = `https://api.scryfall.com/cards/search?q=!"${encodeURIComponent(debouncedQuery)}"`;
+        // Først forsøk å hente én versjon med eksakt navn
+        const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(debouncedQuery)}`);
+        if (!res.ok) throw new Error("Kort ikke funnet");
+        const card = await res.json();
 
-        const exactRes = await fetch(exactUrl);
-        const exactData = await exactRes.json();
-
-        if (exactData.object === 'list' && exactData.data.length > 0) {
-          setResults(exactData.data);
-        } else {
-          // 2. Hvis ingen eksakt treff, bruk vanlig søk
-          const fallbackUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(debouncedQuery)}`;
-          const fallbackRes = await fetch(fallbackUrl);
-          const fallbackData = await fallbackRes.json();
-          setResults(fallbackData.data || []);
-        }
+        // Deretter hent alle versjoner fra prints_search_uri
+        const printsRes = await fetch(card.prints_search_uri);
+        const printsData = await printsRes.json();
+        setResults(printsData.data || []);
       } catch (err) {
-        console.error('Feil ved Scryfall-søk:', err);
+        console.error("Feil ved henting av kort:", err);
         setResults([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCards();
+    fetchCardPrints();
   }, [debouncedQuery]);
 
   const addCardToCollection = async (card) => {
